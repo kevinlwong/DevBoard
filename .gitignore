@@ -1,0 +1,56 @@
+# Node modules
+node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.*.local
+
+# Build outputs
+build/
+dist/
+frontend/build/
+backend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# VSCode/IDE
+.vscode/
+.idea/
+
+# Docker
+*.pid
+*.seed
+docker-compose.override.yml
+docker-volume/
+pgdata/
+
+# Coverage/testing
+coverage/
+*.lcov
+.nyc_output/
+
+# React-specific
+frontend/.cache/
+frontend/.eslintcache
+
+# Tailwind JIT cache (if used)
+.tailwind*
+
+# Optional local development overrides
+*.local.js
+*.local.json
+*.local.yaml
+
+# Lockfiles (optional if using specific lock manager)
+# Uncomment if not using npm or yarn lockfiles
+# package-lock.json
+# yarn.lock

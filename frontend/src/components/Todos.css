@@ -1,0 +1,137 @@
+/* ───────────────────────────────────────
+ ✨ Base Todo Item Style
+─────────────────────────────────────── */
+.todo-item {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+/* ───────────────────────────────────────
+ 🔠 Text Styles
+─────────────────────────────────────── */
+.todo-text {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.todo-text.done {
+  text-decoration: line-through;
+  color: #999;
+}
+
+/* ───────────────────────────────────────
+ 🧱 Layout Helpers
+─────────────────────────────────────── */
+.todo-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.todo-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-grow: 1;
+}
+
+.todo-content button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ───────────────────────────────────────
+ 📎 Metadata + Hover Effects
+─────────────────────────────────────── */
+.todo-meta {
+  font-size: 0.8rem;
+  color: #555;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tooltip {
+  cursor: help;
+}
+
+.meta-hover {
+  display: none;
+  color: #999;
+}
+
+.todo-item:hover .meta-hover {
+  display: block;
+}
+
+.todo-item:hover .meta-static {
+  display: none;
+}
+
+/* ───────────────────────────────────────
+ 🏷️ Tag Styling
+─────────────────────────────────────── */
+.tag-container {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tag-pill {
+  background: #eef1f5;
+  color: #333;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+}
+
+/* ──────────────────────────────
+ 🎨 Modern Tag Styles (Neutral Base + Accents)
+────────────────────────────── */
+.tag-pill {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 500;
+  text-transform: lowercase;
+  background: #f3f3f3;
+  color: #333;
+}
+
+.tag-bug {
+  background: #ffe5e5;
+  color: #b00020;
+}
+
+.tag-refactor {
+  background: #fff4e5;
+  color: #c2410c;
+}
+
+.tag-inprogress {
+  background: #fff9db;
+  color: #92400e;
+}
+
+.tag-done {
+  background: #e6f9e6;
+  color: #0f5132;
+}
+
+.tag-review {
+  background: #e6f0ff;
+  color: #1a4b91;
+}
+
+.tag-caution {
+  background: #fff1d6;
+  color: #8c4c00;
+}
