@@ -12,11 +12,13 @@ function App() {
   }, []);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "2rem" }}>
-      <Todos></Todos>
-      <p>
-        Backend API Status: <strong>{apiStatus}</strong>
-      </p>
+    <div className="app">
+      <Todos />
+      <div style={{ textAlign: "center", marginTop: "1rem" }}>
+        <p>
+          Backend API Status: <strong>{apiStatus}</strong>
+        </p>
+      </div>
     </div>
   );
 }

@@ -8,11 +8,12 @@ const Todos = () => {
 
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
-  const [newTags, setNewTags] = useState("");
+  const [newTags, setNewTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
   const [newDeadline, setNewDeadline] = useState("");
+  const [error, setError] = useState("");
 
   const tagClassMap = {
     bug: "tag-bug",
@@ -37,21 +38,27 @@ const Todos = () => {
   };
 
   const addTodo = async () => {
-    if (!newTodo.trim()) return;
-    const tags = newTags
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter(Boolean);
+    if (!newTodo.trim()) {
+      setError("Todo text cannot be empty.");
+      return;
+    }
+    setError("");
+
+    const body = { text: newTodo };
+    if (newTags.length > 0) body.tags = newTags;
+    if (newDeadline) body.deadline = newDeadline;
+
     try {
       const res = await fetch(`${API_BASE}/todos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: newTodo, tags, deadline: newDeadline }),
+        body: JSON.stringify(body),
       });
       const added = await res.json();
       setTodos([added, ...todos]);
       setNewTodo("");
-      setNewTags("");
+      setNewTags([]);
+      setNewDeadline("");
     } catch (err) {
       console.error("Failed to add todo", err);
     }
@@ -92,12 +99,21 @@ const Todos = () => {
 
   const handleTextSave = async (id) => {
     if (!editText.trim()) return;
+
     try {
+      const current = todos.find((todo) => todo.id === id);
+
       const res = await fetch(`${API_BASE}/todos/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: editText }),
+        body: JSON.stringify({
+          text: editText,
+          done: current.done,
+          tags: current.tags,
+          deadline: current.deadline,
+        }),
       });
+
       const updated = await res.json();
       setTodos((prev) => prev.map((todo) => (todo.id === id ? updated : todo)));
       cancelEdit();
@@ -111,200 +127,237 @@ const Todos = () => {
   }, [API_BASE]);
 
   return (
-    <div
-      style={{ maxWidth: "600px", margin: "2rem auto", textAlign: "center" }}
-    >
-      <h2
-        style={{
-          fontSize: "1.5rem",
-          fontWeight: 600,
-          marginBottom: "1.5rem",
-          color: "#111",
-        }}
-      >
-        <span style={{ color: "#555" }}>DevBoard</span> <strong>Todos</strong>
-      </h2>
+    <div className="main-wrapper">
+      <div className="todo-list-container">
+        <h2>
+          <span style={{ color: "#555" }}>DevBoard</span> <strong>Todos</strong>
+        </h2>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          justifyContent: "center",
-          marginBottom: "1rem",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Enter a new todo"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          style={{ flexGrow: 1, padding: "0.5rem" }}
-        />
-        <input
-          type="datetime-local"
-          value={newDeadline}
-          onChange={(e) => setNewDeadline(e.target.value)}
-          style={{ padding: "0.5rem" }}
-        />
-        <input
-          type="text"
-          placeholder="tags (comma separated)"
-          value={newTags}
-          onChange={(e) => setNewTags(e.target.value)}
-          style={{ width: "200px", padding: "0.5rem" }}
-        />
-        <button onClick={addTodo} style={{ padding: "0.5rem 1rem" }}>
-          Add
-        </button>
-      </div>
+        {error && <div className="error">⚠️ {error}</div>}
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : todos.length === 0 ? (
-        <p>No todos yet</p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {[...todos]
-            .sort((a, b) => {
-              if (a.done !== b.done) return a.done - b.done;
-              return new Date(b.created_at) - new Date(a.created_at);
-            })
-            .map((todo) => {
-              const created = new Date(todo.created_at);
-              const updated = todo.updated_at
-                ? new Date(todo.updated_at)
-                : null;
+        {/* 🔼 Form inputs */}
+        <div className="todo-header">
+          <input
+            type="text"
+            placeholder="Enter a new todo"
+            value={newTodo}
+            onChange={(e) => setNewTodo(e.target.value)}
+          />
+          <input
+            type="datetime-local"
+            value={newDeadline}
+            onChange={(e) => setNewDeadline(e.target.value)}
+          />
+          <select
+            multiple
+            value={newTags}
+            onChange={(e) => {
+              const selected = Array.from(e.target.selectedOptions).map(
+                (opt) => opt.value
+              );
+              setNewTags(selected);
+            }}
+          >
+            <option value="bug">🐞 Bug</option>
+            <option value="refactor">♻️ Refactor</option>
+            <option value="in progress">🏗️ In Progress</option>
+            <option value="done">✅ Done</option>
+            <option value="review">🔍 Review</option>
+            <option value="caution">⚠️ Caution</option>
+          </select>
 
+          <input
+            type="text"
+            placeholder="Custom tag (optional)"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const val = e.target.value.trim();
+                if (val && !newTags.includes(val)) {
+                  setNewTags((prev) => [...prev, val]);
+                  e.target.value = "";
+                }
+              }
+            }}
+          />
+          <button onClick={addTodo}>Add</button>
+        </div>
+
+        {newTags.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            {newTags.map((tag, idx) => {
+              const cls = tagClassMap[tag.toLowerCase()] || "";
               return (
-                <li className="todo-item" key={todo.id}>
-                  <div className="todo-content">
-                    <input
-                      type="checkbox"
-                      checked={todo.done}
-                      onChange={() => toggleDone(todo.id, !todo.done)}
-                    />
+                <span key={idx} className={`tag-pill ${cls}`}>
+                  {tag}
+                </span>
+              );
+            })}
+          </div>
+        )}
 
-                    <div className="todo-main" style={{ flexGrow: 1 }}>
-                      {editingId === todo.id ? (
+       
+        <div className="todo-scroll-area">
+          {loading ? (
+            <p>Loading...</p>
+          ) : todos.length === 0 ? (
+            <p>No todos yet</p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+              {[...todos]
+                .sort((a, b) => {
+                  if (a.done !== b.done) return a.done - b.done;
+                  return new Date(b.created_at) - new Date(a.created_at);
+                })
+                .map((todo) => {
+                  const created = new Date(todo.created_at);
+                  const updated = todo.updated_at
+                    ? new Date(todo.updated_at)
+                    : null;
+
+                  return (
+                    <li className="todo-item" key={todo.id}>
+                      <div className="todo-content">
+                        <input
+                          type="checkbox"
+                          checked={todo.done}
+                          onChange={() => toggleDone(todo.id, !todo.done)}
+                        />
+                        <div className="todo-main">
+                          {editingId === todo.id ? (
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                              <input
+                                type="text"
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter")
+                                    handleTextSave(todo.id);
+                                  if (e.key === "Escape") cancelEdit();
+                                }}
+                                autoFocus
+                              />
+                              <button onClick={() => handleTextSave(todo.id)}>
+                                Save
+                              </button>
+                              <button onClick={cancelEdit}>Cancel</button>
+                            </div>
+                          ) : (
+                            <>
+                              <div
+                                className={`todo-text ${
+                                  todo.done ? "done" : ""
+                                }`}
+                              >
+                                {todo.text}
+                              </div>
+
+                              {todo.tags?.length > 0 && (
+                                <div className="tag-container">
+                                  {todo.tags.map((tag, idx) => {
+                                    const cls =
+                                      tagClassMap[tag.toLowerCase()] || "";
+                                    return (
+                                      <span
+                                        key={idx}
+                                        className={`tag-pill ${cls}`}
+                                      >
+                                        {tag}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {todo.deadline && (
+                                <div
+                                  className="tooltip"
+                                  title={`Due: ${new Date(
+                                    todo.deadline
+                                  ).toLocaleString()}`}
+                                  style={{
+                                    color:
+                                      new Date(todo.deadline) < new Date() &&
+                                      !todo.done
+                                        ? "crimson"
+                                        : "#555",
+                                    fontWeight:
+                                      new Date(todo.deadline) < new Date() &&
+                                      !todo.done
+                                        ? "bold"
+                                        : "normal",
+                                  }}
+                                >
+                                  Deadline:{" "}
+                                  {new Date(todo.deadline).toLocaleString()}
+                                </div>
+                              )}
+
+                              <div className="todo-meta">
+                                <div
+                                  className="tooltip"
+                                  title={`Created: ${created.toLocaleString()}`}
+                                >
+                                  Created{" "}
+                                  {formatDistanceToNow(created, {
+                                    addSuffix: true,
+                                  })}
+                                </div>
+                                {updated && updated !== created && (
+                                  <div
+                                    className="tooltip"
+                                    title={`Updated: ${updated.toLocaleString()}`}
+                                    style={{
+                                      fontStyle: "italic",
+                                      color: "#888",
+                                    }}
+                                  >
+                                    Updated{" "}
+                                    {formatDistanceToNow(updated, {
+                                      addSuffix: true,
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
                         <div
                           style={{
                             display: "flex",
                             gap: "0.5rem",
-                            alignItems: "center",
+                            color: "crimson",
                           }}
                         >
-                          <input
-                            type="text"
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleTextSave(todo.id);
-                              if (e.key === "Escape") cancelEdit();
-                            }}
-                            autoFocus
-                            style={{ flexGrow: 1 }}
-                          />
-                          <button onClick={() => handleTextSave(todo.id)}>
-                            Save
-                          </button>
-                          <button onClick={cancelEdit}>Cancel</button>
-                        </div>
-                      ) : (
-                        <>
-                          <div
-                            className={`todo-text ${todo.done ? "done" : ""}`}
-                            style={{ fontWeight: 500 }}
+                          <button
+                            onClick={() => startEditing(todo.id, todo.text)}
+                            title="Edit todo"
                           >
-                            {todo.text}
-                          </div>
-
-                          {todo.tags?.length > 0 && (
-                            <div className="tag-container">
-                              {todo.tags.map((tag, idx) => {
-                                const cls =
-                                  tagClassMap[tag.toLowerCase()] || "";
-                                return (
-                                  <span key={idx} className={`tag-pill ${cls}`}>
-                                    {tag}
-                                  </span>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {todo.deadline && (
-                            <div
-                              className="tooltip"
-                              title={`Due: ${new Date(
-                                todo.deadline
-                              ).toLocaleString()}`}
-                            >
-                              Deadline:{" "}
-                              {new Date(todo.deadline).toLocaleString()}
-                            </div>
-                          )}
-
-                          <div className="todo-meta">
-                            <div
-                              className="tooltip"
-                              title={`Created: ${created.toLocaleString()}`}
-                            >
-                              Created{" "}
-                              {formatDistanceToNow(created, {
-                                addSuffix: true,
-                              })}
-                            </div>
-                            {updated && updated !== created && (
-                              <div
-                                className="tooltip"
-                                title={`Updated: ${updated.toLocaleString()}`}
-                                style={{ fontStyle: "italic", color: "#888" }}
-                              >
-                                Updated{" "}
-                                {formatDistanceToNow(updated, {
-                                  addSuffix: true,
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <button
-                        onClick={() => startEditing(todo.id, todo.text)}
-                        title="Edit todo"
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          fontSize: "1.2rem",
-                          color: "#555",
-                        }}
-                      >
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => deleteTodo(todo.id)}
-                        title="Delete todo"
-                        style={{
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          fontSize: "1.2rem",
-                          color: "crimson",
-                        }}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-        </ul>
-      )}
+                            <Pencil size={18} />
+                          </button>
+                          <button
+                            onClick={() => deleteTodo(todo.id)}
+                            title="Delete todo"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

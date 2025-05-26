@@ -1,58 +1,134 @@
-/* ───────────────────────────────────────
- ✨ Base Todo Item Style
-─────────────────────────────────────── */
+/* 🌿 Base Reset */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: "Inter", sans-serif;
+  background-color: #f6f6f6;
+  color: #222;
+  overflow: hidden; /* ✅ KEEP THIS */
+}
+
+/* Layout root */
+#root,
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 🧱 Main Wrapper for Todo UI */
+.main-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.todo-list-container {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 2rem 1rem;
+  min-height: 0; /* ✅ ADD THIS */
+}
+
+/* Header section (inputs) */
+.todo-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  z-index: 2;
+}
+
+/* Scrollable todo list */
+.todo-scroll-area {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0; /* ✅ ADD THIS */
+}
+
+/* Optional scroll shadow at top */
+.todo-scroll-area::before {
+  content: "";
+  position: sticky;
+  top: 0;
+  height: 8px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), transparent);
+  z-index: 1;
+}
+
+/* 🧾 Header */
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 2rem;
+  color: #222;
+}
+
+/* 🔳 Todo Card */
 .todo-item {
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.2s ease;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease-in-out;
 }
 
-/* ───────────────────────────────────────
- 🔠 Text Styles
-─────────────────────────────────────── */
-.todo-text {
-  font-weight: 500;
-  font-size: 1rem;
+.todo-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
-.todo-text.done {
-  text-decoration: line-through;
-  color: #999;
-}
-
-/* ───────────────────────────────────────
- 🧱 Layout Helpers
-─────────────────────────────────────── */
+/* 📋 Content Area */
 .todo-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .todo-main {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  flex-grow: 1;
+  gap: 0.3rem;
 }
 
-.todo-content button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ✅ Task Text */
+.todo-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #222;
+}
+.todo-text.done {
+  text-decoration: line-through;
+  color: #aaa;
 }
 
-/* ───────────────────────────────────────
- 📎 Metadata + Hover Effects
-─────────────────────────────────────── */
+/* 🧾 Meta */
 .todo-meta {
-  font-size: 0.8rem;
-  color: #555;
+  font-size: 0.75rem;
+  color: #777;
+  margin-top: 0.25rem;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -62,76 +138,99 @@
   cursor: help;
 }
 
-.meta-hover {
-  display: none;
-  color: #999;
-}
-
-.todo-item:hover .meta-hover {
-  display: block;
-}
-
-.todo-item:hover .meta-static {
-  display: none;
-}
-
-/* ───────────────────────────────────────
- 🏷️ Tag Styling
-─────────────────────────────────────── */
+/* 🏷️ Tags */
 .tag-container {
-  margin-top: 0.25rem;
   display: flex;
-  flex-wrap: wrap;
   gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .tag-pill {
-  background: #eef1f5;
-  color: #333;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
-}
-
-/* ──────────────────────────────
- 🎨 Modern Tag Styles (Neutral Base + Accents)
-────────────────────────────── */
-.tag-pill {
-  font-size: 0.75rem;
-  padding: 0.25rem 0.6rem;
+  font-size: 0.7rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
-  font-weight: 500;
-  text-transform: lowercase;
   background: #f3f3f3;
   color: #333;
+  font-weight: 500;
+  text-transform: lowercase;
 }
 
 .tag-bug {
   background: #ffe5e5;
   color: #b00020;
 }
-
 .tag-refactor {
   background: #fff4e5;
   color: #c2410c;
 }
-
 .tag-inprogress {
   background: #fff9db;
   color: #92400e;
 }
-
 .tag-done {
   background: #e6f9e6;
   color: #0f5132;
 }
-
 .tag-review {
   background: #e6f0ff;
   color: #1a4b91;
 }
-
 .tag-caution {
   background: #fff1d6;
   color: #8c4c00;
+}
+
+/* ✏️ Controls */
+.todo-content button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  padding: 0.3rem;
+  transition: color 0.2s;
+}
+.todo-content button:hover {
+  color: #333;
+}
+
+/* 📥 Input Area */
+input[type="text"],
+input[type="datetime-local"],
+select {
+  border: none;
+  background: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="datetime-local"]:focus,
+select:focus {
+  box-shadow: 0 0 0 2px #ddd;
+}
+
+/* 🧾 Error */
+.error {
+  color: crimson;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+/* 🪄 Button */
+button {
+  border-radius: 12px;
+  border: none;
+  background-color: #222;
+  color: white;
+  font-weight: 500;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+button:hover {
+  background-color: #444;
 }
