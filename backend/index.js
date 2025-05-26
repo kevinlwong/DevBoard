@@ -5,8 +5,16 @@ require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running on port ${PORT}`);
+});
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "*", // or set to your Vercel frontend domain for security
+  })
+);
 app.use(express.json());
 
 // PostgreSQL Pool
@@ -38,15 +46,16 @@ waitForPostgres().then(() => {
   pool
     .query(
       `
-    CREATE TABLE IF NOT EXISTS todos (
-      id SERIAL PRIMARY KEY,
-      text TEXT NOT NULL,
-      done BOOLEAN DEFAULT false,
-      tags TEXT[] DEFAULT ARRAY[]::TEXT[],
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `
+      CREATE TABLE IF NOT EXISTS todos (
+        id SERIAL PRIMARY KEY,
+        text TEXT NOT NULL,
+        done BOOLEAN DEFAULT false,
+        tags TEXT[],
+        deadline TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `
     )
     .then(() => console.log("🗃️ Todos table ready"))
     .catch(console.error);
@@ -72,13 +81,36 @@ app.get("/api/todos", async (req, res) => {
 
 // Add todo
 app.post("/api/todos", async (req, res) => {
-  const { text, tags = [], deadline } = req.body;
+  const { text, tags, deadline } = req.body;
+
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: "Todo text is required." });
+  }
 
   try {
-    const result = await pool.query(
-      "INSERT INTO todos (text, tags, deadline) VALUES ($1, $2, $3) RETURNING *",
-      [text, tags, deadline]
-    );
+    const columns = ["text"];
+    const placeholders = ["$1"];
+    const values = [text];
+    let idx = 2;
+
+    if (tags && Array.isArray(tags)) {
+      columns.push("tags");
+      placeholders.push(`$${idx++}`);
+      values.push(tags);
+    }
+
+    if (deadline) {
+      columns.push("deadline");
+      placeholders.push(`$${idx++}`);
+      values.push(deadline);
+    }
+
+    const query = `
+      INSERT INTO todos (${columns.join(", ")})
+      VALUES (${placeholders.join(", ")})
+      RETURNING *`;
+
+    const result = await pool.query(query, values);
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("❌ Failed to add todo:", err);
@@ -89,7 +121,7 @@ app.post("/api/todos", async (req, res) => {
 // Update todo
 app.patch("/api/todos/:id", async (req, res) => {
   const { id } = req.params;
-  const { done, text, tags } = req.body;
+  const { done, text, tags, deadline } = req.body;
 
   const fields = [];
   const values = [];
@@ -110,12 +142,13 @@ app.patch("/api/todos/:id", async (req, res) => {
     values.push(tags);
   }
 
-  if (fields.length === 0) {
-    return res.status(400).json({ error: "No valid fields provided." });
-  }
   if (deadline !== undefined) {
     fields.push(`deadline = $${index++}`);
     values.push(deadline);
+  }
+
+  if (fields.length === 0) {
+    return res.status(400).json({ error: "No valid fields provided." });
   }
 
   values.push(id);
@@ -124,8 +157,7 @@ app.patch("/api/todos/:id", async (req, res) => {
     UPDATE todos
     SET ${fields.join(", ")}, updated_at = NOW()
     WHERE id = $${index}
-    RETURNING *
-  `;
+    RETURNING *`;
 
   try {
     const result = await pool.query(query, values);
@@ -152,9 +184,4 @@ app.delete("/api/todos/:id", async (req, res) => {
 app.use((req, res, next) => {
   console.log(`👉 ${req.method} ${req.url}`);
   next();
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
 });
